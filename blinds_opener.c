@@ -52,23 +52,6 @@ ISR(INT1_vect)
     update_encoder();
 }
 
-void main() 
-{
-
-    // TODO nintialize pins
-    set_step_size(16);
-    while (1) 
-    {
-
-        light_sensor_value = analog_read(light_sensor_pin);
-        light_sensor_threshold = analog_read(pot_pin);
-
-        target_pos = target_pos(light_sensor_value, light_sensor_threshold);
-        target_pos = read_override_state(); //leaves unchanged if not overrode
-        move_stepper_to_pos(target_pos - encoder_pos);
-    }
-}
-
 int target_pos(int lsv, int lst)
 {
     if (lsv > lst)
@@ -149,8 +132,20 @@ int update_encoder()
     encoder_state = new_encoder_state
 }
 
+void main() 
+{
 
+    // TODO nintialize pins
+    set_step_size(16);
+    while (1) 
+    {
 
+        light_sensor_value = analog_read(light_sensor_pin);
+        light_sensor_threshold = analog_read(pot_pin);
 
+        target_pos = target_pos(light_sensor_value, light_sensor_threshold);
+        target_pos = read_override_state(); //leaves unchanged if not overrode
+        move_stepper_to_pos(target_pos - encoder_pos);
+    }
+}
 
-    
