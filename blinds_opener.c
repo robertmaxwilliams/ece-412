@@ -1,4 +1,9 @@
 
+#include <avr/io.h>
+#include <avr/interrupt.h>
+ 
+#define F_CPU 4000000UL
+#include <util/delay.h>
 
 int direction_pin = 19;
 int step_pin = 18;
@@ -24,8 +29,33 @@ int open_pos = 30;
 int override_open_pin = 13;
 int override_closed_pin = 14;
 
+
+int encoder_a_pin = 0;
+int encoder_b_pin = 1;
+
+int encoder_state = 0;
+int encoder_pos = 0;
+
+
+
+//Interrupt Service Routine for INT0, A pin of encoder
+ISR(INT0_vect)
+{
+    update_encoder();
+}
+
+
+
+//Interrupt Service Routine for INT1, B pin of encoder
+ISR(INT1_vect)
+{
+    update_encoder();
+}
+
 void main() 
 {
+
+    // TODO nintialize pins
     set_step_size(16);
     while (1) 
     {
@@ -35,7 +65,7 @@ void main()
 
         target_pos = target_pos(light_sensor_value, light_sensor_threshold);
         target_pos = read_override_state(); //leaves unchanged if not overrode
-        move_stepper_to_pos(target_pos);
+        move_stepper_to_pos(target_pos - encoder_pos);
     }
 }
 
@@ -80,10 +110,47 @@ void move_stepper_to_pos(int target_pos)
     wait_millis(50);
     return
 }
+
+void step(int dir)
+{
+    digital_write(direction_pin, dir);
+    digial_write(step_pin, 1);
+    delay_ms(1);
+    digial_write(step_pin, 0);
+}
+
+int read_encoder_state()
+{
+    int grey_code = 0;
+    // read in 2 bit grey code, should be int in 0,1,2,3
+    greycode += digital_read(encoder_a_pin);
+    greycode += 2 * digital_read(encoder_b_pin)
+    int grey_code_to_ordinal[] = {1,2,0,3};
+    return grey_code_to_ordinal[greycode]
+}
+
+// returns difference between the two, in mod base
+// only if they differ by 1. Otherwise returns 0
+int mod_diff_by_one(int a, int b, int base)
+{
+    // modulo is ill-defined in C, and the specifics are confusing,
+    // so I'm going to do this in a really dumb way. 
+    if ((a+1)%base == b)
+        return -1
+    if ((b+1)%base == a)
+        return 1
+    return 0
+}
+
+int update_encoder()
+{
+    int new_encoder_state = read_encoder_state();
+    encoder_pos += mod_diff_by_one(new_encoder_state, encoder_state);
+    encoder_state = new_encoder_state
+}
+
+
+
+
+
     
-
-
-
-
-        
-
